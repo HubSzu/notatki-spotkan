@@ -75,10 +75,10 @@
   .meta-field input:focus, .meta-field select:focus { outline: none; border-color: var(--accent); background: white; }
   .meta-field.full { grid-column: 1 / -1; }
 
-  .section { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 20px; overflow: hidden; }
+  .section { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 20px; overflow: visible; }
   .section-header { padding: 14px 20px; background: var(--surface2); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
   .section-title { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-muted); display: flex; align-items: center; gap: 8px; }
-  .section-body { padding: 16px 20px; }
+  .section-body { padding: 16px 20px; overflow: visible; }
 
   input.field, textarea.field, select.field { border: 1px solid var(--border); border-radius: 4px; padding: 7px 10px; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; color: var(--text); background: var(--bg); transition: border-color 0.15s; width: 100%; }
   input.field:focus, textarea.field:focus, select.field:focus { outline: none; border-color: var(--accent); background: white; }
@@ -160,8 +160,13 @@
   .login-screen h2 { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
   .login-screen p { font-size: 13px; color: var(--text-muted); margin-bottom: 28px; line-height: 1.6; }
 
-  .autocomplete-wrapper { position: relative; }
-  .autocomplete-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid var(--border-strong); border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+  .autocomplete-wrapper { position: relative; overflow: visible; }
+  .who-wrapper { position: relative; overflow: visible; }
+  .who-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid var(--border-strong); border-radius: 4px; max-height: 160px; overflow-y: auto; z-index: 9999; box-shadow: 0 8px 24px rgba(0,0,0,0.18); min-width: 140px; }
+  .who-item { padding: 7px 12px; font-size: 13px; cursor: pointer; border-bottom: 1px solid var(--surface2); }
+  .who-item:last-child { border-bottom: none; }
+  .who-item:hover { background: var(--accent-light); color: var(--accent); }
+  .autocomplete-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid var(--border-strong); border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 9999; box-shadow: 0 8px 24px rgba(0,0,0,0.18); }
   .autocomplete-item { padding: 8px 12px; font-size: 13px; cursor: pointer; border-bottom: 1px solid var(--surface2); }
   .autocomplete-item:last-child { border-bottom: none; }
   .autocomplete-item:hover, .autocomplete-item.active { background: var(--accent-light); color: var(--accent); }
@@ -446,7 +451,11 @@ function onLoggedIn() {
   document.getElementById('main-tabs').style.display = '';
   document.getElementById('btn-logout').style.display = '';
   document.getElementById('btn-login').style.display = 'none';
-  document.getElementById('user-name').textContent = currentAccount.name || currentAccount.username;
+  var fullName = currentAccount.name || currentAccount.username;
+  document.getElementById('user-name').textContent = fullName;
+  // Auto-fill Protokolant with logged user name
+  var scribeEl = document.getElementById('meta-scribe');
+  if (scribeEl && !scribeEl.value) scribeEl.value = fullName;
   setStatus('loading', 'Pobieranie listy projektów…');
   loadProjectList();
 }
@@ -468,6 +477,7 @@ var siteId = null;
 var meetingListId = null;
 var notesListId = null;
 var spProjects = [];
+var teamMembers = ['Hubert', 'Karolina', 'Magda', 'Marcin', 'Marysia'];
 
 async function getSiteId(token) {
   var r = await fetch('https://graph.microsoft.com/v1.0/sites/' + SITE_DOMAIN + ':' + SITE_PATH, {
@@ -754,6 +764,8 @@ var actionRowCount = 0;
 
 window.onload = function() {
   document.getElementById('meta-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('meta-lead').value = 'Hubert';
+  document.getElementById('meta-attendees').value = 'Magda, Marysia, Marcin';
   addProject();
   addAction();
   initAuth();
@@ -885,6 +897,37 @@ function refreshAllNotesPanel() {
       '<div style="font-size:13px;line-height:1.6;white-space:pre-wrap;padding:8px 12px;background:white;border-radius:4px;border:1px solid var(--border)">' + escHtml(d.notes.trim() || '(brak notatek)') + '</div>';
     content.appendChild(div);
   });
+}
+
+function showWhoDropdown(input) {
+  var val = input.value.trim().toLowerCase();
+  var drop = input.nextElementSibling;
+  if (!drop) return;
+  if (val.length < 2) { drop.style.display = 'none'; return; }
+  var matches = teamMembers.filter(function(m) {
+    return m.toLowerCase().indexOf(val) !== -1;
+  });
+  if (matches.length === 0) { drop.style.display = 'none'; return; }
+  drop.innerHTML = matches.map(function(m) {
+    return '<div class="who-item" onmousedown="selectWho(this, \'' + m + '\')">' + m + '</div>';
+  }).join('');
+  drop.style.display = '';
+}
+
+function selectWho(item, name) {
+  var wrapper = item.closest('.who-wrapper');
+  if (!wrapper) return;
+  var input = wrapper.querySelector('input');
+  var drop = wrapper.querySelector('.who-dropdown');
+  if (input) input.value = name;
+  if (drop) drop.style.display = 'none';
+}
+
+function hideWhoDropdown(input, delay) {
+  setTimeout(function() {
+    var drop = input.nextElementSibling;
+    if (drop) drop.style.display = 'none';
+  }, delay || 150);
 }
 
 function selectProject(id, nazwa, numer) {
