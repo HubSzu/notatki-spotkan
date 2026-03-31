@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notatka ze Spotkania</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #f5f4f0;
+    --surface: #ffffff;
+    --surface2: #f0ede6;
+    --border: #d8d4ca;
+    --border-strong: #b8b2a6;
+    --text: #1a1916;
+    --text-muted: #7a7670;
+    --accent: #1d4ed8;
+    --accent-light: #dbeafe;
+    --danger: #dc2626;
+    --success: #16a34a;
+    --warning: #d97706;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'IBM Plex Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* HEADER */
+  .app-header { background: var(--text); color: var(--bg); padding: 14px 32px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .app-header .logo { font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+  .app-header .logo span { color: #6b9fff; }
+  .header-actions { display: flex; gap: 8px; align-items: center; }
+
+  /* STATUS BAR */
+  .status-bar { background: var(--surface2); border-bottom: 1px solid var(--border); padding: 8px 32px; display: flex; align-items: center; gap: 12px; font-size: 12px; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border-strong); flex-shrink: 0; }
+  .status-dot.ok { background: var(--success); }
+  .status-dot.err { background: var(--danger); }
+  .status-dot.loading { background: var(--warning); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .status-text { color: var(--text-muted); }
+
+  /* TABS */
+  .tabs { background: var(--surface); border-bottom: 1px solid var(--border); display: flex; padding: 0 32px; }
+  .tab { padding: 12px 20px; font-size: 13px; font-weight: 500; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s; white-space: nowrap; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* BUTTONS */
+  .btn { font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 8px 16px; border: 1.5px solid transparent; border-radius: 4px; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
+  .btn-primary:hover { background: #1e40af; }
+  .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-outline { background: transparent; color: var(--bg); border-color: rgba(255,255,255,0.3); }
+  .btn-outline:hover { border-color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.1); }
+  .btn-ghost { background: transparent; color: var(--text-muted); border-color: var(--border); font-size: 12px; padding: 6px 12px; }
+  .btn-ghost:hover { border-color: var(--border-strong); color: var(--text); }
+  .btn-danger-ghost { background: transparent; color: var(--danger); border-color: transparent; padding: 4px 8px; font-size: 12px; cursor: pointer; border-radius: 4px; font-family: 'IBM Plex Sans', sans-serif; }
+  .btn-danger-ghost:hover { background: #fee2e2; }
+  .btn-add { background: var(--surface2); color: var(--text); border: 1.5px dashed var(--border-strong); width: 100%; justify-content: center; padding: 10px; font-size: 13px; border-radius: 6px; margin-top: 8px; }
+  .btn-add:hover { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+  .btn-toggle { background: var(--accent-light); color: var(--accent); border: 1.5px solid var(--accent); font-size: 12px; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-family: 'IBM Plex Sans', sans-serif; font-weight: 500; }
+  .btn-success { background: #dcfce7; color: var(--success); border: 1.5px solid #86efac; font-size: 12px; padding: 5px 14px; border-radius: 4px; cursor: pointer; font-family: 'IBM Plex Sans', sans-serif; font-weight: 500; }
+  .btn-success:hover { background: #bbf7d0; }
+
+  /* LAYOUT */
+  .container { max-width: 980px; margin: 0 auto; padding: 32px 32px 80px; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* FORM FIELDS */
+  .meta-bar { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .meta-field label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); display: block; margin-bottom: 6px; font-family: 'IBM Plex Mono', monospace; }
+  .meta-field input, .meta-field select { width: 100%; border: 1px solid var(--border); border-radius: 4px; padding: 8px 10px; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; color: var(--text); background: var(--bg); transition: border-color 0.15s; }
+  .meta-field input:focus, .meta-field select:focus { outline: none; border-color: var(--accent); background: white; }
+  .meta-field.full { grid-column: 1 / -1; }
+
+  .section { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 20px; overflow: hidden; }
+  .section-header { padding: 14px 20px; background: var(--surface2); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .section-title { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-muted); display: flex; align-items: center; gap: 8px; }
+  .section-body { padding: 16px 20px; }
+
+  input.field, textarea.field, select.field { border: 1px solid var(--border); border-radius: 4px; padding: 7px 10px; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; color: var(--text); background: var(--bg); transition: border-color 0.15s; width: 100%; }
+  input.field:focus, textarea.field:focus, select.field:focus { outline: none; border-color: var(--accent); background: white; }
+  select.field { cursor: pointer; }
+
+  .projects-table { width: 100%; border-collapse: collapse; }
+  .projects-table th { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); font-family: 'IBM Plex Mono', monospace; padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--border); }
+  .projects-table td { padding: 6px 4px; vertical-align: middle; }
+  .projects-table tr:not(:last-child) td { border-bottom: 1px solid var(--surface2); }
+
+  .project-note-block { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 12px; overflow: hidden; }
+  .project-note-header { padding: 10px 16px; background: #eef2ff; border-bottom: 1px solid #c7d2fe; display: flex; align-items: center; gap: 10px; }
+  .project-note-label { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; color: var(--accent); letter-spacing: 0.06em; flex: 1; }
+  .project-note-body { padding: 10px 14px; }
+  .project-note-body textarea { width: 100%; min-height: 80px; border: 1px solid var(--border); border-radius: 4px; padding: 8px 10px; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; line-height: 1.6; color: var(--text); background: var(--bg); resize: vertical; }
+  .project-note-body textarea:focus { outline: none; border-color: var(--accent); background: white; }
+
+  .action-table { width: 100%; border-collapse: collapse; }
+  .action-table th { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); font-family: 'IBM Plex Mono', monospace; padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--border); }
+  .action-table td { padding: 5px 4px; vertical-align: middle; }
+  .action-table tbody tr { border-bottom: 1px solid var(--surface2); }
+  .action-table tbody tr:hover { background: #fafaf8; }
+  .col-no { width: 32px; text-align: center; }
+  .col-task { min-width: 200px; }
+  .col-who { width: 120px; }
+  .col-date { width: 130px; }
+  .col-proj { width: 200px; }
+  .col-del { width: 36px; text-align: center; }
+  .row-num { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text-muted); text-align: center; display: block; }
+
+  .badge { display: inline-block; font-size: 10px; font-family: 'IBM Plex Mono', monospace; font-weight: 600; padding: 2px 7px; border-radius: 3px; background: var(--accent); color: white; }
+  .empty-hint { text-align: center; padding: 20px; color: var(--text-muted); font-size: 13px; font-style: italic; }
+  .section-hint { font-size: 11px; color: var(--text-muted); margin-bottom: 12px; }
+  .section-hint .hint-arrow { color: var(--accent); font-weight: bold; }
+  textarea.notes-field { width: 100%; min-height: 70px; border: 1px solid var(--border); border-radius: 4px; padding: 10px 12px; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; line-height: 1.6; color: var(--text); background: var(--bg); resize: vertical; }
+  textarea.notes-field:focus { outline: none; border-color: var(--accent); background: white; }
+
+  /* ARCHIVE TAB */
+  .archive-controls { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end; }
+  .filter-field label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); display: block; margin-bottom: 5px; font-family: 'IBM Plex Mono', monospace; }
+  .filter-field input, .filter-field select { width: 100%; border: 1px solid var(--border); border-radius: 4px; padding: 8px 10px; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; color: var(--text); background: var(--bg); }
+  .filter-field input:focus, .filter-field select:focus { outline: none; border-color: var(--accent); background: white; }
+
+  .meeting-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 12px; overflow: hidden; }
+  .meeting-card-header { padding: 12px 16px; background: var(--surface2); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+  .meeting-card-header:hover { background: #e8e4dc; }
+  .meeting-card-date { font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; color: var(--accent); }
+  .meeting-card-meta { font-size: 12px; color: var(--text-muted); }
+  .meeting-card-body { padding: 14px 16px; display: none; }
+  .meeting-card-body.open { display: block; }
+  .note-entry { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--surface2); }
+  .note-entry:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .note-proj { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; color: var(--accent); margin-bottom: 4px; }
+  .note-text { font-size: 13px; line-height: 1.6; white-space: pre-wrap; background: var(--bg); padding: 8px 12px; border-radius: 4px; border: 1px solid var(--border); }
+  .note-actions { font-size: 12px; color: var(--text-muted); margin-top: 6px; font-style: italic; }
+  .proj-badge { display: inline-block; font-size: 10px; font-family: 'IBM Plex Mono', monospace; padding: 2px 7px; border-radius: 3px; background: var(--accent-light); color: var(--accent); border: 1px solid #bfdbfe; margin-right: 4px; margin-bottom: 4px; }
+
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+  .modal-overlay.active { display: flex; }
+  .modal { background: white; border-radius: 10px; width: 700px; max-width: 95vw; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+  .modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--surface2); }
+  .modal-header h3 { font-size: 14px; font-weight: 600; font-family: 'IBM Plex Mono', monospace; }
+  .modal-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+  .modal-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; background: var(--surface2); align-items: center; }
+  #output-text { width: 100%; min-height: 300px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.7; border: 1px solid var(--border); border-radius: 4px; padding: 12px; background: var(--bg); resize: none; color: var(--text); }
+  .copy-success { color: var(--success); font-size: 12px; font-weight: 500; display: none; align-items: center; gap: 4px; }
+  .copy-success.show { display: flex; }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 20px; border-radius: 8px; font-size: 13px; font-weight: 500; z-index: 2000; display: none; align-items: center; gap: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+  .toast.show { display: flex; }
+  .toast-success { background: #dcfce7; color: var(--success); border: 1px solid #86efac; }
+  .toast-error { background: #fee2e2; color: var(--danger); border: 1px solid #fca5a5; }
+  .toast-info { background: var(--accent-light); color: var(--accent); border: 1px solid #93c5fd; }
+
+  /* LOGIN SCREEN */
+  .login-screen { max-width: 440px; margin: 80px auto; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 40px; text-align: center; }
+  .login-screen h2 { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+  .login-screen p { font-size: 13px; color: var(--text-muted); margin-bottom: 28px; line-height: 1.6; }
+
+  @media (max-width: 640px) {
+    .meta-bar { grid-template-columns: 1fr 1fr; }
+    .archive-controls { grid-template-columns: 1fr; }
+    .container { padding: 16px 16px 60px; }
+    .app-header { padding: 12px 16px; }
+    .tabs { padding: 0 16px; overflow-x: auto; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="app-header">
+  <div class="logo">MS365 <span>///</span> Notatki Spotkań</div>
+  <div class="header-actions">
+    <span id="user-name" style="font-size:12px;opacity:.7;font-family:'IBM Plex Mono',monospace"></span>
+    <button class="btn btn-outline" id="btn-login" onclick="signIn()" style="display:none">Zaloguj</button>
+    <button class="btn btn-outline" id="btn-logout" onclick="signOut()" style="display:none">Wyloguj</button>
+  </div>
+</div>
+
+<!-- STATUS BAR -->
+<div class="status-bar">
+  <div class="status-dot" id="status-dot"></div>
+  <span class="status-text" id="status-text">Łączenie z SharePoint…</span>
+</div>
+
+<!-- TABS -->
+<div class="tabs" id="main-tabs" style="display:none">
+  <div class="tab active" onclick="switchTab('new')">Nowa notatka</div>
+  <div class="tab" onclick="switchTab('archive')">Archiwum notatek</div>
+</div>
+
+<!-- MAIN CONTAINER -->
+<div class="container">
+
+  <!-- LOGIN SCREEN -->
+  <div id="login-screen" class="login-screen" style="display:none">
+    <h2>Zaloguj się</h2>
+    <p>Aby korzystać z formularza notatek, zaloguj się kontem Microsoft 365 używanym w firmie.</p>
+    <button class="btn btn-primary" onclick="signIn()" style="width:100%;justify-content:center;padding:12px">Zaloguj przez Microsoft 365</button>
+  </div>
+
+  <!-- NEW NOTE TAB -->
+  <div class="tab-panel active" id="panel-new">
+
+    <div class="meta-bar">
+      <div class="meta-field">
+        <label>Data spotkania</label>
+        <input type="date" id="meta-date">
+      </div>
+      <div class="meta-field">
+        <label>Godzina (od – do)</label>
+        <input type="text" id="meta-time" placeholder="09:00 – 10:00">
+      </div>
+      <div class="meta-field">
+        <label>Prowadzący</label>
+        <input type="text" id="meta-lead" placeholder="Imię i nazwisko">
+      </div>
+      <div class="meta-field">
+        <label>Protokolant</label>
+        <input type="text" id="meta-scribe" placeholder="Imię i nazwisko">
+      </div>
+      <div class="meta-field full">
+        <label>Uczestnicy</label>
+        <input type="text" id="meta-attendees" placeholder="np. Anna K., Piotr W., Marek L.">
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">Omawiane projekty</div>
+        <button class="btn btn-ghost" onclick="addProject()">+ Dodaj projekt</button>
+      </div>
+      <div class="section-body">
+        <p class="section-hint"><span class="hint-arrow">→</span> Projekty wpisane tutaj automatycznie pojawią się w Action Items i w sekcji Przebieg &amp; Ustalenia.</p>
+        <table class="projects-table">
+          <thead>
+            <tr>
+              <th>Nazwa projektu</th>
+              <th style="width:190px">Nr projektu (auto)</th>
+              <th style="width:110px">Status</th>
+              <th style="width:36px"></th>
+            </tr>
+          </thead>
+          <tbody id="projects-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">Przebieg &amp; Ustalenia</div>
+        <button class="btn-toggle" onclick="toggleAllNotes()" id="btn-all-notes">Pokaż wszystkie</button>
+      </div>
+      <div class="section-body">
+        <div id="all-notes-panel" style="display:none;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:16px 20px;margin-bottom:16px">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:#92400e;margin-bottom:12px">Widok zbiorczy — wszystkie projekty</div>
+          <div id="all-notes-content"></div>
+        </div>
+        <div id="project-notes-container">
+          <p class="empty-hint">Dodaj projekt powyżej — każdy projekt otrzyma własne pole notatek.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">Action Items <span class="badge" id="ai-count">0</span></div>
+        <button class="btn btn-ghost" onclick="addAction()">+ Dodaj zadanie</button>
+      </div>
+      <div class="section-body">
+        <table class="action-table">
+          <thead>
+            <tr>
+              <th class="col-no">#</th>
+              <th class="col-task">Zadanie</th>
+              <th class="col-who">Odpowiedzialny</th>
+              <th class="col-date">Termin</th>
+              <th class="col-proj">Projekt</th>
+              <th class="col-del"></th>
+            </tr>
+          </thead>
+          <tbody id="actions-body"></tbody>
+        </table>
+        <button class="btn btn-add" onclick="addAction()">+ Dodaj zadanie</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">Ryzyka i blokady</div>
+      </div>
+      <div class="section-body">
+        <textarea class="notes-field" id="risks" placeholder="Wymień problemy lub ryzyka mogące opóźnić projekty…"></textarea>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">Następne spotkanie</div>
+      </div>
+      <div class="section-body" style="display:grid;grid-template-columns:1fr 1fr 2fr;gap:12px">
+        <div>
+          <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:0.08em;">Data</label>
+          <input type="date" id="next-date" class="field">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:0.08em;">Godzina</label>
+          <input type="text" id="next-time" class="field" placeholder="09:00">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:0.08em;">Tematy</label>
+          <input type="text" id="next-topics" class="field" placeholder="np. Przegląd postępów">
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+      <button class="btn btn-ghost" onclick="resetForm()">Nowa notatka</button>
+      <button class="btn btn-ghost" onclick="openCopyModal()">Kopiuj do schowka</button>
+      <button class="btn btn-primary" id="btn-save" onclick="saveToSharePoint()">Zapisz w SharePoint</button>
+    </div>
+
+  </div>
+
+  <!-- ARCHIVE TAB -->
+  <div class="tab-panel" id="panel-archive">
+
+    <div class="archive-controls">
+      <div class="filter-field">
+        <label>Filtruj po dacie</label>
+        <input type="date" id="filter-date" oninput="loadArchive()">
+      </div>
+      <div class="filter-field">
+        <label>Filtruj po numerze projektu</label>
+        <input type="text" id="filter-proj" placeholder="np. 48001226010001" oninput="debounceArchive()">
+      </div>
+      <div>
+        <button class="btn btn-ghost" onclick="clearFilters()">Wyczyść filtry</button>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span id="archive-count" style="font-size:12px;color:var(--text-muted)"></span>
+      <button class="btn btn-success" id="btn-copy-proj" onclick="copyProjectHistory()" style="display:none">Kopiuj historię projektu</button>
+    </div>
+
+    <div id="archive-list">
+      <p class="empty-hint">Wyszukaj notatki używając filtrów powyżej.</p>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- COPY MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">Notatka — kopiuj do schowka</h3>
+      <button class="btn btn-ghost" onclick="closeModal()" style="color:var(--text)">✕</button>
+    </div>
+    <div class="modal-body">
+      <textarea id="output-text" readonly></textarea>
+    </div>
+    <div class="modal-footer">
+      <span class="copy-success" id="copy-ok">✓ Skopiowano!</span>
+      <button class="btn btn-ghost" onclick="closeModal()">Zamknij</button>
+      <button class="btn btn-primary" onclick="copyToClipboard()">Kopiuj do schowka</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- MSAL (Microsoft Authentication) -->
+<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.28.1/lib/msal-browser.min.js"></script>
+
+<script>
+// =============================================
+// KONFIGURACJA — zmień te wartości jeśli potrzeba
+// =============================================
+var CLIENT_ID    = 'bbd0bafd-f6c2-4f52-b0eb-42f85614e869';
+var TENANT_ID    = '15833e17-ca6d-4f22-9660-00d7fb2cf351';
+var SITE_URL     = 'https://adboard73.sharepoint.com/sites/Zarzdzanieprojektami';
+var SITE_DOMAIN  = 'adboard73.sharepoint.com';
+var SITE_PATH    = '/sites/Zarzdzanieprojektami';
+
+// =============================================
+// MSAL — logowanie Microsoft
+// =============================================
+var msalConfig = {
+  auth: {
+    clientId: CLIENT_ID,
+    authority: 'https://login.microsoftonline.com/' + TENANT_ID,
+    redirectUri: window.location.href.split('?')[0]
+  },
+  cache: { cacheLocation: 'sessionStorage' }
+};
+
+var msalInstance = null;
+var currentAccount = null;
+
+var loginRequest = {
+  scopes: ['https://graph.microsoft.com/Sites.ReadWrite.All',
+           'https://graph.microsoft.com/Files.ReadWrite.All']
+};
+
+async function initAuth() {
+  msalInstance = await msal.PublicClientApplication.createPublicClientApplication(msalConfig);
+  var response = await msalInstance.handleRedirectPromise();
+  if (response) { currentAccount = response.account; onLoggedIn(); return; }
+  var accounts = msalInstance.getAllAccounts();
+  if (accounts.length > 0) {
+    currentAccount = accounts[0];
+    onLoggedIn();
+  } else {
+    setStatus('err', 'Niezalogowany — kliknij Zaloguj aby kontynuować');
+    document.getElementById('btn-login').style.display = '';
+    document.getElementById('login-screen').style.display = '';
+  }
+}
+
+function signIn() {
+  msalInstance.loginRedirect(loginRequest);
+}
+
+function signOut() {
+  msalInstance.logoutRedirect({ account: currentAccount });
+}
+
+function onLoggedIn() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('main-tabs').style.display = '';
+  document.getElementById('btn-logout').style.display = '';
+  document.getElementById('btn-login').style.display = 'none';
+  document.getElementById('user-name').textContent = currentAccount.name || currentAccount.username;
+  setStatus('loading', 'Pobieranie listy projektów…');
+  loadProjectList();
+}
+
+async function getToken() {
+  try {
+    var result = await msalInstance.acquireTokenSilent({ ...loginRequest, account: currentAccount });
+    return result.accessToken;
+  } catch(e) {
+    var result = await msalInstance.acquireTokenPopup(loginRequest);
+    return result.accessToken;
+  }
+}
+
+// =============================================
+// GRAPH API — SharePoint
+// =============================================
+var siteId = null;
+var meetingListId = null;
+var notesListId = null;
+var spProjects = [];
+
+async function getSiteId(token) {
+  var r = await fetch('https://graph.microsoft.com/v1.0/sites/' + SITE_DOMAIN + ':' + SITE_PATH, {
+    headers: { Authorization: 'Bearer ' + token }
+  });
+  var d = await r.json();
+  return d.id;
+}
+
+async function getListId(token, siteid, listName) {
+  var r = await fetch('https://graph.microsoft.com/v1.0/sites/' + siteid + '/lists?$filter=displayName eq \'' + listName + '\'', {
+    headers: { Authorization: 'Bearer ' + token }
+  });
+  var d = await r.json();
+  return d.value && d.value[0] ? d.value[0].id : null;
+}
+
+async function loadProjectList() {
+  try {
+    var token = await getToken();
+    siteId = await getSiteId(token);
+    meetingListId = await getListId(token, siteId, 'Lista_Spotkan');
+    notesListId   = await getListId(token, siteId, 'Lista_Notatek');
+
+    // Load projects from Lista_Projektow
+    var projListId = await getListId(token, siteId, 'Lista_Projektow');
+    if (projListId) {
+      var r = await fetch('https://graph.microsoft.com/v1.0/sites/' + siteId + '/lists/' + projListId + '/items?$expand=fields($select=Numer,Nazwa,Klient,Status)&$top=500', {
+        headers: { Authorization: 'Bearer ' + token }
+      });
+      var d = await r.json();
+      spProjects = (d.value || []).map(function(i) { return i.fields; }).filter(function(f) { return f && f.Numer; });
+    }
+    setStatus('ok', 'Połączono z SharePoint — zalogowany jako ' + currentAccount.name);
+  } catch(e) {
+    setStatus('err', 'Błąd połączenia z SharePoint: ' + e.message);
+  }
+}
+
+async function saveToSharePoint() {
+  if (!siteId || !meetingListId || !notesListId) {
+    showToast('Brak połączenia z SharePoint', 'error'); return;
+  }
+  var dateVal = document.getElementById('meta-date').value;
+  if (!dateVal) { showToast('Podaj datę spotkania', 'error'); return; }
+
+  var btn = document.getElementById('btn-save');
+  btn.disabled = true; btn.textContent = 'Zapisywanie…';
+
+  try {
+    var token = await getToken();
+
+    // 1. Create meeting record
+    var meetingBody = {
+      fields: {
+        Title: 'Spotkanie ' + dateVal,
+        Data_spotkania: dateVal + 'T00:00:00Z',
+        Godzina: document.getElementById('meta-time').value,
+        Prowadzacy: document.getElementById('meta-lead').value,
+        Protokolant: document.getElementById('meta-scribe').value,
+        Uczestnicy: document.getElementById('meta-attendees').value
+      }
+    };
+    var mr = await fetch('https://graph.microsoft.com/v1.0/sites/' + siteId + '/lists/' + meetingListId + '/items', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify(meetingBody)
+    });
+    var meetingItem = await mr.json();
+    var meetingId = String(meetingItem.id);
+
+    // 2. Create one note per project
+    var actions = getActions();
+    for (var i = 0; i < projectIds.length; i++) {
+      var pid = projectIds[i];
+      var d = getProjectData(pid);
+      if (!d.num && !d.name) continue;
+
+      // Collect action items for this project
+      var projLabel = getProjectLabel(pid);
+      var projActions = actions.filter(function(a) { return a.proj === projLabel; });
+      var actionsText = projActions.map(function(a, idx) {
+        return (idx+1) + '. ' + a.task + (a.who ? ' | ' + a.who : '') + (a.date ? ' | termin: ' + fmtDate(a.date) : '');
+      }).join('\n');
+
+      // Add risks to last project or as separate
+      var notesText = d.notes.trim();
+      var risks = document.getElementById('risks').value.trim();
+      if (risks && i === projectIds.length - 1) {
+        notesText += (notesText ? '\n\n' : '') + 'RYZYKA:\n' + risks;
+      }
+
+      var noteBody = {
+        fields: {
+          Title: dateVal + ' | ' + (d.num || d.name),
+          ID_Spotkania: meetingId,
+          Numer_Projektu: d.num || '',
+          Notatka: notesText.substring(0, 10000),
+          Action_Items: actionsText.substring(0, 5000)
+        }
+      };
+      await fetch('https://graph.microsoft.com/v1.0/sites/' + siteId + '/lists/' + notesListId + '/items', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify(noteBody)
+      });
+    }
+
+    showToast('Notatka zapisana w SharePoint!', 'success');
+    btn.disabled = false; btn.textContent = 'Zapisz w SharePoint';
+  } catch(e) {
+    showToast('Błąd zapisu: ' + e.message, 'error');
+    btn.disabled = false; btn.textContent = 'Zapisz w SharePoint';
+  }
+}
+
+// =============================================
+// ARCHIVE
+// =============================================
+var archiveDebounce = null;
+var archiveData = [];
+
+function debounceArchive() {
+  clearTimeout(archiveDebounce);
+  archiveDebounce = setTimeout(loadArchive, 500);
+}
+
+function clearFilters() {
+  document.getElementById('filter-date').value = '';
+  document.getElementById('filter-proj').value = '';
+  document.getElementById('archive-list').innerHTML = '<p class="empty-hint">Wyszukaj notatki używając filtrów powyżej.</p>';
+  document.getElementById('archive-count').textContent = '';
+  document.getElementById('btn-copy-proj').style.display = 'none';
+}
+
+async function loadArchive() {
+  if (!siteId || !notesListId || !meetingListId) {
+    document.getElementById('archive-list').innerHTML = '<p class="empty-hint">Brak połączenia z SharePoint.</p>'; return;
+  }
+  var dateFilter = document.getElementById('filter-date').value;
+  var projFilter = document.getElementById('filter-proj').value.trim();
+
+  if (!dateFilter && !projFilter) {
+    document.getElementById('archive-list').innerHTML = '<p class="empty-hint">Podaj datę lub numer projektu aby wyszukać notatki.</p>';
+    document.getElementById('btn-copy-proj').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('archive-list').innerHTML = '<p class="empty-hint">Wczytywanie…</p>';
+  document.getElementById('btn-copy-proj').style.display = projFilter ? '' : 'none';
+
+  try {
+    var token = await getToken();
+
+    // Load notes with filter
+    var filterParts = [];
+    if (projFilter) filterParts.push("fields/Numer_Projektu eq '" + projFilter + "'");
+
+    var url = 'https://graph.microsoft.com/v1.0/sites/' + siteId + '/lists/' + notesListId +
+      '/items?$expand=fields&$top=200&$orderby=fields/Title desc';
+    if (filterParts.length) url += '&$filter=' + encodeURIComponent(filterParts.join(' and '));
+
+    var r = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
+    var d = await r.json();
+    var notes = (d.value || []).map(function(i) { return i.fields; });
+
+    // Load meetings to get dates
+    var mr = await fetch('https://graph.microsoft.com/v1.0/sites/' + siteId + '/lists/' + meetingListId +
+      '/items?$expand=fields&$top=500', { headers: { Authorization: 'Bearer ' + token } });
+    var md = await mr.json();
+    var meetings = {};
+    (md.value || []).forEach(function(i) {
+      if (i.fields) meetings[String(i.id)] = i.fields;
+    });
+
+    // Group notes by meeting
+    var byMeeting = {};
+    notes.forEach(function(n) {
+      var mid = n.ID_Spotkania || 'unknown';
+      var mtg = meetings[mid] || {};
+      var mtgDate = mtg.Data_spotkania ? mtg.Data_spotkania.split('T')[0] : (n.Title || '').split(' | ')[0];
+
+      // Filter by date if set
+      if (dateFilter && mtgDate !== dateFilter) return;
+
+      if (!byMeeting[mid]) byMeeting[mid] = { meeting: mtg, date: mtgDate, notes: [] };
+      byMeeting[mid].notes.push(n);
+    });
+
+    archiveData = Object.values(byMeeting).sort(function(a, b) { return b.date.localeCompare(a.date); });
+
+    renderArchive(archiveData, projFilter);
+  } catch(e) {
+    document.getElementById('archive-list').innerHTML = '<p class="empty-hint">Błąd: ' + e.message + '</p>';
+  }
+}
+
+function renderArchive(data, projFilter) {
+  var container = document.getElementById('archive-list');
+  var totalNotes = data.reduce(function(s, m) { return s + m.notes.length; }, 0);
+  document.getElementById('archive-count').textContent = data.length + ' spotkań, ' + totalNotes + ' notatek';
+
+  if (data.length === 0) {
+    container.innerHTML = '<p class="empty-hint">Brak notatek dla podanych kryteriów.</p>'; return;
+  }
+
+  container.innerHTML = '';
+  data.forEach(function(item, idx) {
+    var mtg = item.meeting;
+    var card = document.createElement('div');
+    card.className = 'meeting-card';
+
+    var projs = item.notes.map(function(n) { return n.Numer_Projektu; }).filter(Boolean);
+    var projBadges = projs.map(function(p) { return '<span class="proj-badge">' + p + '</span>'; }).join('');
+
+    var headerInfo = [];
+    if (mtg.Prowadzacy) headerInfo.push('Prowadzący: ' + mtg.Prowadzacy);
+    if (mtg.Uczestnicy) headerInfo.push(mtg.Uczestnicy);
+
+    card.innerHTML =
+      '<div class="meeting-card-header" onclick="toggleCard(this)">' +
+        '<div>' +
+          '<div class="meeting-card-date">' + fmtDate(item.date) + (mtg.Godzina ? '  ' + mtg.Godzina : '') + '</div>' +
+          '<div style="margin-top:4px">' + projBadges + '</div>' +
+        '</div>' +
+        '<div style="text-align:right">' +
+          '<div class="meeting-card-meta">' + (headerInfo[0] || '') + '</div>' +
+          '<div style="font-size:11px;color:var(--text-muted);margin-top:2px">' + item.notes.length + ' projekt' + (item.notes.length > 1 ? 'ów' : '') + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="meeting-card-body" id="mcard-' + idx + '">' +
+        item.notes.map(function(n) {
+          return '<div class="note-entry">' +
+            '<div class="note-proj">' + (n.Numer_Projektu || '—') + '</div>' +
+            '<div class="note-text">' + escHtml(n.Notatka || '(brak notatek)') + '</div>' +
+            (n.Action_Items ? '<div class="note-actions">Action Items: ' + escHtml(n.Action_Items) + '</div>' : '') +
+          '</div>';
+        }).join('') +
+      '</div>';
+
+    container.appendChild(card);
+  });
+}
+
+function toggleCard(header) {
+  var body = header.nextElementSibling;
+  body.classList.toggle('open');
+}
+
+function copyProjectHistory() {
+  var projFilter = document.getElementById('filter-proj').value.trim();
+  if (!projFilter || archiveData.length === 0) return;
+
+  var lines = [];
+  lines.push('HISTORIA PROJEKTU: ' + projFilter);
+  lines.push('='.repeat(60));
+  lines.push('Wygenerowano: ' + new Date().toLocaleDateString('pl-PL'));
+  lines.push('');
+
+  archiveData.forEach(function(item) {
+    item.notes.forEach(function(n) {
+      if (n.Numer_Projektu !== projFilter) return;
+      lines.push('DATA SPOTKANIA: ' + fmtDate(item.date) + (item.meeting.Godzina ? '  ' + item.meeting.Godzina : ''));
+      if (item.meeting.Prowadzacy) lines.push('Prowadzący: ' + item.meeting.Prowadzacy);
+      if (item.meeting.Uczestnicy) lines.push('Uczestnicy: ' + item.meeting.Uczestnicy);
+      lines.push('─'.repeat(40));
+      lines.push(n.Notatka || '(brak notatek)');
+      if (n.Action_Items) { lines.push(''); lines.push('ACTION ITEMS:'); lines.push(n.Action_Items); }
+      lines.push('');
+    });
+  });
+
+  document.getElementById('modal-title').textContent = 'Historia projektu ' + projFilter;
+  document.getElementById('output-text').value = lines.join('\n');
+  document.getElementById('modal').classList.add('active');
+  document.getElementById('copy-ok').classList.remove('show');
+}
+
+// =============================================
+// FORM LOGIC (same as before)
+// =============================================
+var projectIds = [];
+var actionRowCount = 0;
+
+window.onload = function() {
+  document.getElementById('meta-date').value = new Date().toISOString().split('T')[0];
+  addProject();
+  addAction();
+  initAuth();
+};
+
+function addProject() {
+  var id = 'p' + Date.now() + Math.floor(Math.random()*1000);
+  projectIds.push(id);
+  var tbody = document.getElementById('projects-body');
+  var tr = document.createElement('tr');
+  tr.id = 'proj-tr-' + id;
+  tr.innerHTML =
+    '<td><input class="field" style="font-size:13px" placeholder="Zacznij pisać nazwę projektu…" id="pname-' + id + '" oninput="onProjectChange(\'' + id + '\')" autocomplete="off"></td>' +
+    '<td><input class="field" style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;letter-spacing:0.06em;background:#f0ede6;color:#7a7670" readonly placeholder="(wypełni się automatycznie)" id="pnum-' + id + '"></td>' +
+    '<td><select class="field" style="font-size:12px" id="pstatus-' + id + '"><option value="W toku">W toku</option><option value="Zakończony">Zakończony</option><option value="Zablokowany">Zablokowany</option></select></td>' +
+    '<td><button class="btn btn-danger-ghost" onclick="removeProject(\'' + id + '\')">✕</button></td>';
+  tbody.appendChild(tr);
+
+  var container = document.getElementById('project-notes-container');
+  var hint = container.querySelector('.empty-hint');
+  if (hint) hint.remove();
+  var block = document.createElement('div');
+  block.className = 'project-note-block';
+  block.id = 'note-block-' + id;
+  block.innerHTML =
+    '<div class="project-note-header"><span class="project-note-label" id="note-label-' + id + '">Nowy projekt</span></div>' +
+    '<div class="project-note-body"><textarea id="pnotes-' + id + '" placeholder="Ustalenia, decyzje, kluczowe informacje…" oninput="refreshAllNotesPanel()"></textarea></div>';
+  container.appendChild(block);
+
+  // Autocomplete datalist
+  // Build autocomplete dropdown for name field
+  var existing = document.querySelectorAll('.proj-suggest-' + id);
+  existing.forEach(function(e) { e.remove(); });
+  var nameEl = document.getElementById('pname-' + id);
+  if (nameEl) {
+    var listId = 'dl-' + id;
+    nameEl.setAttribute('list', listId);
+    var dl = document.createElement('datalist');
+    dl.id = listId;
+    dl.innerHTML = spProjects.map(function(p) { return '<option value="' + (p.Nazwa || p.Klient || '') + '"></option>'; }).join('');
+    document.body.appendChild(dl);
+  }
+
+  updateAllDropdowns();
+}
+
+function onProjectChange(id) {
+  var num = document.getElementById('pnum-' + id);
+  var name = document.getElementById('pname-' + id);
+  var label = document.getElementById('note-label-' + id);
+  if (!num || !name || !label) return;
+
+  // Auto-fill number when name matches a project
+  var nameVal = name.value.trim();
+  if (nameVal && spProjects.length) {
+    var found = spProjects.find(function(p) {
+      return (p.Nazwa || '').toLowerCase() === nameVal.toLowerCase() ||
+             (p.Nazwa || '').toLowerCase().indexOf(nameVal.toLowerCase()) === 0;
+    });
+    if (found) {
+      num.value = found.Numer || '';
+    }
+  }
+  var numVal = num.value.trim();
+  label.textContent = nameVal ? nameVal + (numVal ? ' [' + numVal + ']' : '') : (numVal || 'Nowy projekt');
+  updateAllDropdowns();
+  refreshAllNotesPanel();
+}
+
+function removeProject(id) {
+  projectIds = projectIds.filter(function(p) { return p !== id; });
+  var tr = document.getElementById('proj-tr-' + id); if (tr) tr.remove();
+  var block = document.getElementById('note-block-' + id); if (block) block.remove();
+  if (projectIds.length === 0) {
+    document.getElementById('project-notes-container').innerHTML = '<p class="empty-hint">Dodaj projekt powyżej.</p>';
+  }
+  updateAllDropdowns(); refreshAllNotesPanel();
+}
+
+function getProjectLabel(id) {
+  var num = document.getElementById('pnum-' + id);
+  var name = document.getElementById('pname-' + id);
+  var n = num ? num.value.trim() : '';
+  var na = name ? name.value.trim() : '';
+  if (n && na) return n + ' | ' + na;
+  return na || n || '';
+}
+
+function getProjectData(id) {
+  return {
+    num: (document.getElementById('pnum-' + id)||{value:''}).value||'',
+    name: (document.getElementById('pname-' + id)||{value:''}).value||'',
+    status: (document.getElementById('pstatus-' + id)||{value:'W toku'}).value||'W toku',
+    notes: (document.getElementById('pnotes-' + id)||{value:''}).value||''
+  };
+}
+
+function toggleAllNotes() {
+  var panel = document.getElementById('all-notes-panel');
+  var btn = document.getElementById('btn-all-notes');
+  var visible = panel.style.display !== 'none';
+  panel.style.display = visible ? 'none' : '';
+  btn.textContent = visible ? 'Pokaż wszystkie' : 'Ukryj';
+  if (!visible) refreshAllNotesPanel();
+}
+
+function refreshAllNotesPanel() {
+  var panel = document.getElementById('all-notes-panel');
+  if (panel.style.display === 'none') return;
+  var content = document.getElementById('all-notes-content');
+  content.innerHTML = '';
+  projectIds.forEach(function(id) {
+    var d = getProjectData(id);
+    var label = getProjectLabel(id) || '(bez nazwy)';
+    var div = document.createElement('div');
+    div.style.cssText = 'margin-bottom:14px';
+    div.innerHTML = '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;font-weight:600;color:var(--accent);margin-bottom:4px">' + label + '</div>' +
+      '<div style="font-size:13px;line-height:1.6;white-space:pre-wrap;padding:8px 12px;background:white;border-radius:4px;border:1px solid var(--border)">' + escHtml(d.notes.trim() || '(brak notatek)') + '</div>';
+    content.appendChild(div);
+  });
+}
+
+function updateAllDropdowns() {
+  document.getElementById('actions-body').querySelectorAll('select.proj-select').forEach(function(sel) {
+    var current = sel.value;
+    sel.innerHTML = '<option value="">— wybierz projekt —</option>';
+    projectIds.forEach(function(id) {
+      var label = getProjectLabel(id);
+      if (!label) return;
+      var opt = document.createElement('option');
+      opt.value = label; opt.textContent = label;
+      if (current === label) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  });
+}
+
+function addAction() {
+  actionRowCount++;
+  var rowId = 'ar-' + Date.now() + Math.floor(Math.random()*1000);
+  var tbody = document.getElementById('actions-body');
+  var opts = '<option value="">— wybierz projekt —</option>';
+  projectIds.forEach(function(id) {
+    var label = getProjectLabel(id);
+    if (label) opts += '<option value="' + label + '">' + label + '</option>';
+  });
+  var tr = document.createElement('tr');
+  tr.id = rowId;
+  tr.innerHTML =
+    '<td class="col-no"><span class="row-num">' + actionRowCount + '</span></td>' +
+    '<td class="col-task"><input class="field" placeholder="Opis zadania…" style="font-size:13px"></td>' +
+    '<td class="col-who"><input class="field" placeholder="Kto?" style="font-size:13px"></td>' +
+    '<td class="col-date"><input type="date" class="field" style="font-size:12px"></td>' +
+    '<td class="col-proj"><select class="field proj-select" style="font-size:12px">' + opts + '</select></td>' +
+    '<td class="col-del"><button class="btn btn-danger-ghost" onclick="removeActionRow(\'' + rowId + '\')">✕</button></td>';
+  tbody.appendChild(tr);
+  document.getElementById('ai-count').textContent = tbody.rows.length;
+}
+
+function removeActionRow(rowId) {
+  var tr = document.getElementById(rowId); if (tr) tr.remove();
+  document.getElementById('ai-count').textContent = document.getElementById('actions-body').rows.length;
+}
+
+function getActions() {
+  var result = [];
+  document.getElementById('actions-body').querySelectorAll('tr').forEach(function(tr, idx) {
+    var inputs = tr.querySelectorAll('input');
+    var sel = tr.querySelector('select');
+    var task = inputs[0] ? inputs[0].value.trim() : '';
+    if (!task) return;
+    result.push({ num: idx+1, task: task, who: inputs[1] ? inputs[1].value.trim() : '', date: inputs[2] ? inputs[2].value : '', proj: sel ? sel.value : '' });
+  });
+  return result;
+}
+
+function fmtDate(val) {
+  if (!val) return '—';
+  var p = val.split('-');
+  if (p.length !== 3) return val;
+  return p[2] + '.' + p[1] + '.' + p[0];
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function buildOutput() {
+  var sep = '─'.repeat(60);
+  var lines = ['NOTATKA ZE SPOTKANIA', sep,
+    'Data:        ' + fmtDate(document.getElementById('meta-date').value),
+    'Godzina:     ' + (document.getElementById('meta-time').value || '—'),
+    'Prowadzący:  ' + (document.getElementById('meta-lead').value || '—'),
+    'Protokolant: ' + (document.getElementById('meta-scribe').value || '—'),
+    'Uczestnicy:  ' + (document.getElementById('meta-attendees').value || '—'), ''];
+  lines.push('OMAWIANE PROJEKTY', sep);
+  projectIds.forEach(function(id) {
+    var d = getProjectData(id);
+    lines.push('  [' + (d.num||'—') + ']  ' + d.name + '  (' + d.status + ')');
+  });
+  lines.push('');
+  lines.push('PRZEBIEG I USTALENIA', sep);
+  projectIds.forEach(function(id) {
+    var d = getProjectData(id);
+    lines.push('  ▸ ' + (getProjectLabel(id) || '(bez nazwy)'));
+    lines.push('  ' + (d.notes.trim() || '(brak notatek)'));
+    lines.push('');
+  });
+  var actionList = getActions();
+  lines.push('ACTION ITEMS', sep);
+  if (actionList.length === 0) { lines.push('  (brak zadań)'); }
+  else {
+    actionList.forEach(function(a) {
+      lines.push('  ' + a.num + '. ' + a.task + (a.who ? ' | ' + a.who : '') + (a.date ? ' | termin: ' + fmtDate(a.date) : '') + (a.proj ? ' | ' + a.proj : ''));
+    });
+  }
+  var risks = document.getElementById('risks').value.trim();
+  if (risks) { lines.push(''); lines.push('RYZYKA I BLOKADY', sep, risks); }
+  lines.push('');
+  lines.push('NASTĘPNE SPOTKANIE', sep);
+  lines.push('  Data: ' + fmtDate(document.getElementById('next-date').value) + '   Godzina: ' + (document.getElementById('next-time').value||'—'));
+  lines.push('  Tematy: ' + (document.getElementById('next-topics').value||'—'));
+  return lines.join('\n');
+}
+
+function openCopyModal() {
+  document.getElementById('modal-title').textContent = 'Notatka — kopiuj do schowka';
+  document.getElementById('output-text').value = buildOutput();
+  document.getElementById('modal').classList.add('active');
+  document.getElementById('copy-ok').classList.remove('show');
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('active'); }
+
+function copyToClipboard() {
+  var ta = document.getElementById('output-text');
+  ta.select();
+  document.execCommand('copy');
+  document.getElementById('copy-ok').classList.add('show');
+}
+
+function resetForm() {
+  if (!confirm('Wyczyścić formularz i zacząć nową notatkę?')) return;
+  projectIds = []; actionRowCount = 0;
+  document.getElementById('projects-body').innerHTML = '';
+  document.getElementById('actions-body').innerHTML = '';
+  document.getElementById('project-notes-container').innerHTML = '<p class="empty-hint">Dodaj projekt powyżej — każdy projekt otrzyma własne pole notatek.</p>';
+  document.getElementById('all-notes-panel').style.display = 'none';
+  document.getElementById('btn-all-notes').textContent = 'Pokaż wszystkie';
+  document.getElementById('meta-date').value = new Date().toISOString().split('T')[0];
+  ['meta-time','meta-lead','meta-scribe','meta-attendees','risks','next-date','next-time','next-topics'].forEach(function(id) {
+    var el = document.getElementById(id); if(el) el.value = '';
+  });
+  document.getElementById('ai-count').textContent = '0';
+  addProject(); addAction();
+}
+
+// =============================================
+// UI HELPERS
+// =============================================
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(function(t, i) { t.classList.toggle('active', (i === 0 && name === 'new') || (i === 1 && name === 'archive')); });
+  document.getElementById('panel-new').classList.toggle('active', name === 'new');
+  document.getElementById('panel-archive').classList.toggle('active', name === 'archive');
+  if (name === 'archive' && siteId) { /* ready */ }
+}
+
+function setStatus(type, msg) {
+  var dot = document.getElementById('status-dot');
+  dot.className = 'status-dot ' + type;
+  document.getElementById('status-text').textContent = msg;
+}
+
+function showToast(msg, type) {
+  var t = document.getElementById('toast');
+  t.className = 'toast show toast-' + (type || 'info');
+  t.textContent = msg;
+  setTimeout(function() { t.className = 'toast'; }, 4000);
+}
+
+document.getElementById('modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+</script>
+</body>
+</html>
