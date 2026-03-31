@@ -160,6 +160,14 @@
   .login-screen h2 { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
   .login-screen p { font-size: 13px; color: var(--text-muted); margin-bottom: 28px; line-height: 1.6; }
 
+  .autocomplete-wrapper { position: relative; }
+  .autocomplete-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid var(--border-strong); border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+  .autocomplete-item { padding: 8px 12px; font-size: 13px; cursor: pointer; border-bottom: 1px solid var(--surface2); }
+  .autocomplete-item:last-child { border-bottom: none; }
+  .autocomplete-item:hover, .autocomplete-item.active { background: var(--accent-light); color: var(--accent); }
+  .autocomplete-item .item-num { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text-muted); display: block; margin-top: 2px; }
+  .autocomplete-item:hover .item-num { color: var(--accent); }
+
   @media (max-width: 640px) {
     .meta-bar { grid-template-columns: 1fr 1fr; }
     .archive-controls { grid-template-columns: 1fr; }
@@ -758,7 +766,7 @@ function addProject() {
   var tr = document.createElement('tr');
   tr.id = 'proj-tr-' + id;
   tr.innerHTML =
-    '<td><input class="field" style="font-size:13px" placeholder="Zacznij pisać nazwę projektu…" id="pname-' + id + '" oninput="onProjectChange(\'' + id + '\')" autocomplete="off"></td>' +
+    '<td><div class="autocomplete-wrapper"><input class="field" style="font-size:13px" placeholder="Zacznij pisać nazwę projektu…" id="pname-' + id + '" oninput="onProjectChange(\'' + id + '\')" autocomplete="off" onblur="hideDropdown(\'' + id + '\', 200)"><div class="autocomplete-dropdown" id="drop-' + id + '" style="display:none"></div></div></td>' +
     '<td><input class="field" style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;letter-spacing:0.06em;background:#f0ede6;color:#7a7670" readonly placeholder="(wypełni się automatycznie)" id="pnum-' + id + '"></td>' +
     '<td><select class="field" style="font-size:12px" id="pstatus-' + id + '"><option value="W toku">W toku</option><option value="Zakończony">Zakończony</option><option value="Zablokowany">Zablokowany</option></select></td>' +
     '<td><button class="btn btn-danger-ghost" onclick="removeProject(\'' + id + '\')">✕</button></td>';
@@ -776,18 +784,7 @@ function addProject() {
   container.appendChild(block);
 
   // Autocomplete datalist
-  // Build autocomplete dropdown for name field
-  var existing = document.querySelectorAll('.proj-suggest-' + id);
-  existing.forEach(function(e) { e.remove(); });
-  var nameEl = document.getElementById('pname-' + id);
-  if (nameEl) {
-    var listId = 'dl-' + id;
-    nameEl.setAttribute('list', listId);
-    var dl = document.createElement('datalist');
-    dl.id = listId;
-    dl.innerHTML = spProjects.map(function(p) { return '<option value="' + (p.Nazwa || p.Klient || '') + '"></option>'; }).join('');
-    document.body.appendChild(dl);
-  }
+  // Custom dropdown built on demand - no datalist needed
 
   updateAllDropdowns();
 }
@@ -798,19 +795,41 @@ function onProjectChange(id) {
   var label = document.getElementById('note-label-' + id);
   if (!num || !name || !label) return;
 
-  // Auto-fill number when name matches a project
   var nameVal = name.value.trim();
-  if (nameVal && spProjects.length) {
-    var found = spProjects.find(function(p) {
-      return (p.Nazwa || '').toLowerCase() === nameVal.toLowerCase() ||
-             (p.Nazwa || '').toLowerCase().indexOf(nameVal.toLowerCase()) === 0;
-    });
-    if (found) {
-      num.value = found.Numer || '';
+  var drop = document.getElementById('drop-' + id);
+
+  // Check for exact match first
+  var exactMatch = spProjects.find(function(p) {
+    return (p.Nazwa || '').toLowerCase() === nameVal.toLowerCase();
+  });
+  if (exactMatch) {
+    num.value = exactMatch.Numer || '';
+    if (drop) drop.style.display = 'none';
+  } else {
+    num.value = '';
+    // Show filtered dropdown
+    if (drop && nameVal.length >= 2) {
+      var matches = spProjects.filter(function(p) {
+        return (p.Nazwa || '').toLowerCase().indexOf(nameVal.toLowerCase()) !== -1 ||
+               (p.Klient || '').toLowerCase().indexOf(nameVal.toLowerCase()) !== -1;
+      }).slice(0, 15);
+      if (matches.length > 0) {
+        drop.innerHTML = matches.map(function(p) {
+          return '<div class="autocomplete-item" onmousedown="selectProject(\'' + id + '\', \'' + (p.Nazwa||'').replace(/'/g,"\\'\\'") + '\', \'' + (p.Numer||'') + '\')">' +
+            '<span>' + (p.Nazwa || p.Klient || '') + '</span>' +
+            '<span class="item-num">' + (p.Numer || '') + '</span>' +
+          '</div>';
+        }).join('');
+        drop.style.display = '';
+      } else {
+        drop.style.display = 'none';
+      }
+    } else if (drop) {
+      drop.style.display = 'none';
     }
   }
   var numVal = num.value.trim();
-  label.textContent = nameVal ? nameVal + (numVal ? ' [' + numVal + ']' : '') : (numVal || 'Nowy projekt');
+  label.textContent = nameVal ? nameVal + (numVal ? ' [' + numVal + ']' : '') : 'Nowy projekt';
   updateAllDropdowns();
   refreshAllNotesPanel();
 }
@@ -866,6 +885,26 @@ function refreshAllNotesPanel() {
       '<div style="font-size:13px;line-height:1.6;white-space:pre-wrap;padding:8px 12px;background:white;border-radius:4px;border:1px solid var(--border)">' + escHtml(d.notes.trim() || '(brak notatek)') + '</div>';
     content.appendChild(div);
   });
+}
+
+function selectProject(id, nazwa, numer) {
+  var name = document.getElementById('pname-' + id);
+  var num = document.getElementById('pnum-' + id);
+  var label = document.getElementById('note-label-' + id);
+  var drop = document.getElementById('drop-' + id);
+  if (name) name.value = nazwa;
+  if (num) num.value = numer;
+  if (drop) drop.style.display = 'none';
+  if (label) label.textContent = nazwa + (numer ? ' [' + numer + ']' : '');
+  updateAllDropdowns();
+  refreshAllNotesPanel();
+}
+
+function hideDropdown(id, delay) {
+  setTimeout(function() {
+    var drop = document.getElementById('drop-' + id);
+    if (drop) drop.style.display = 'none';
+  }, delay || 150);
 }
 
 function updateAllDropdowns() {
