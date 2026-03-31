@@ -393,7 +393,20 @@
 <div id="global-who-drop" style="position:fixed;background:white;border:1px solid #b8b2a6;border-radius:4px;max-height:160px;overflow-y:auto;z-index:99999;box-shadow:0 8px 24px rgba(0,0,0,0.18);display:none;min-width:160px"></div>
 
 <!-- MSAL (Microsoft Authentication) -->
-<script src="https://unpkg.com/@azure/msal-browser@3.28.1/lib/msal-browser.min.js"></script>
+<script>
+var msalLoaded = false;
+var domReady = false;
+function tryInit() { if (msalLoaded && domReady) initAuth(); }
+function msalLoadError() {
+  var dot = document.getElementById('status-dot');
+  var txt = document.getElementById('status-text');
+  if(dot) dot.className = 'status-dot err';
+  if(txt) txt.textContent = 'Błąd ładowania biblioteki logowania. Odśwież stronę.';
+  var btn = document.getElementById('btn-login');
+  if(btn) btn.style.display = '';
+}
+</script>
+<script src="https://unpkg.com/@azure/msal-browser@3.28.1/lib/msal-browser.min.js" onload="msalLoaded=true;tryInit()" onerror="msalLoadError()"></script>
 
 <script>
 // =============================================
@@ -770,7 +783,8 @@ window.onload = function() {
   document.getElementById('meta-attendees').value = 'Magda, Marysia, Marcin';
   addProject();
   addAction();
-  initAuth();
+  domReady = true;
+  tryInit();
 };
 
 function addProject() {
@@ -914,7 +928,7 @@ function showWhoDropdown(input) {
   });
   if (matches.length === 0) { drop.style.display = 'none'; return; }
   drop.innerHTML = matches.map(function(m) {
-    return '<div class="who-item" onmousedown="selectWho(\'' + m + '\')" style="padding:8px 14px;font-size:13px;cursor:pointer;border-bottom:1px solid #f0ede6" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background=''">' + m + '</div>';
+    return '<div class="who-item" onmousedown="selectWho(\'' + m + '\')" style="padding:8px 14px;font-size:13px;cursor:pointer;border-bottom:1px solid #f0ede6;">' + m + '</div>';
   }).join('');
   var rect = input.getBoundingClientRect();
   drop.style.top = (rect.bottom) + 'px';
