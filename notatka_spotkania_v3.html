@@ -162,7 +162,7 @@
 
   .autocomplete-wrapper { position: relative; overflow: visible; }
   .who-wrapper { position: relative; overflow: visible; }
-  .who-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid var(--border-strong); border-radius: 4px; max-height: 160px; overflow-y: auto; z-index: 9999; box-shadow: 0 8px 24px rgba(0,0,0,0.18); min-width: 140px; }
+  .who-dropdown { position: fixed; background: white; border: 1px solid var(--border-strong); border-radius: 4px; max-height: 160px; overflow-y: auto; z-index: 9999; box-shadow: 0 8px 24px rgba(0,0,0,0.18); min-width: 160px; }
   .who-item { padding: 7px 12px; font-size: 13px; cursor: pointer; border-bottom: 1px solid var(--surface2); }
   .who-item:last-child { border-bottom: none; }
   .who-item:hover { background: var(--accent-light); color: var(--accent); }
@@ -911,6 +911,11 @@ function showWhoDropdown(input) {
   drop.innerHTML = matches.map(function(m) {
     return '<div class="who-item" onmousedown="selectWho(this, \'' + m + '\')">' + m + '</div>';
   }).join('');
+  // Position using fixed coords to escape table overflow clipping
+  var rect = input.getBoundingClientRect();
+  drop.style.top = (rect.bottom + window.scrollY) + 'px';
+  drop.style.left = rect.left + 'px';
+  drop.style.width = rect.width + 'px';
   drop.style.display = '';
 }
 
