@@ -390,8 +390,10 @@
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
+<div id="global-who-drop" style="position:fixed;background:white;border:1px solid #b8b2a6;border-radius:4px;max-height:160px;overflow-y:auto;z-index:99999;box-shadow:0 8px 24px rgba(0,0,0,0.18);display:none;min-width:160px"></div>
+
 <!-- MSAL (Microsoft Authentication) -->
-<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.28.1/lib/msal-browser.min.js"></script>
+<script src="https://unpkg.com/@azure/msal-browser@3.28.1/lib/msal-browser.min.js"></script>
 
 <script>
 // =============================================
@@ -899,40 +901,40 @@ function refreshAllNotesPanel() {
   });
 }
 
+var currentWhoInput = null;
+
 function showWhoDropdown(input) {
   var val = input.value.trim().toLowerCase();
-  var drop = input.nextElementSibling;
+  var drop = document.getElementById('global-who-drop');
   if (!drop) return;
+  currentWhoInput = input;
   if (val.length < 2) { drop.style.display = 'none'; return; }
   var matches = teamMembers.filter(function(m) {
     return m.toLowerCase().indexOf(val) !== -1;
   });
   if (matches.length === 0) { drop.style.display = 'none'; return; }
   drop.innerHTML = matches.map(function(m) {
-    return '<div class="who-item" onmousedown="selectWho(this, \'' + m + '\')">' + m + '</div>';
+    return '<div class="who-item" onmousedown="selectWho(\'' + m + '\')" style="padding:8px 14px;font-size:13px;cursor:pointer;border-bottom:1px solid #f0ede6" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background=''">' + m + '</div>';
   }).join('');
-  // Position using fixed coords to escape table overflow clipping
   var rect = input.getBoundingClientRect();
-  drop.style.top = (rect.bottom + window.scrollY) + 'px';
+  drop.style.top = (rect.bottom) + 'px';
   drop.style.left = rect.left + 'px';
   drop.style.width = rect.width + 'px';
   drop.style.display = '';
 }
 
-function selectWho(item, name) {
-  var wrapper = item.closest('.who-wrapper');
-  if (!wrapper) return;
-  var input = wrapper.querySelector('input');
-  var drop = wrapper.querySelector('.who-dropdown');
-  if (input) input.value = name;
+function selectWho(name) {
+  if (currentWhoInput) currentWhoInput.value = name;
+  var drop = document.getElementById('global-who-drop');
   if (drop) drop.style.display = 'none';
+  currentWhoInput = null;
 }
 
 function hideWhoDropdown(input, delay) {
   setTimeout(function() {
-    var drop = input.nextElementSibling;
+    var drop = document.getElementById('global-who-drop');
     if (drop) drop.style.display = 'none';
-  }, delay || 150);
+  }, delay || 200);
 }
 
 function selectProject(id, nazwa, numer) {
